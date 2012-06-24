@@ -44,14 +44,11 @@ display_last_changelog(){
 
 # display the last commit, change spec file, commit and build for rawhide
 change_spec_and_build(){
-	
-	display_last_changelog
 
 	generate_changelog
 	tmp="$(mktemp)"
 	sed -e '/^%changelog/ a\'"$changelog_msg"'' -e '/^Version/c\'"Version:\t$VERSION"''  "$SPEC_FILE" > "$tmp"
 	mv "$tmp" "$SPEC_FILE"
-	
 
 	git commit -am "$GIT_COMMIT"
 	git push
@@ -90,11 +87,12 @@ display_usage(){
 # validate arguments
 if [ "$#" -eq "2" -a -e "$PACKAGE_PATH" -a -e "$SOURCE_PATH" ]
 then
-	get_inputs
 	cd "$PACKAGE_PATH"
+	get_spec_file_name
+	display_last_changelog
+	get_inputs
 	fedpkg switch-branch master
 	fedpkg new-sources "$SOURCE_PATH"
-	get_spec_file_name
 	change_spec_and_build
 	go_through_branches
 else
