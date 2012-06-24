@@ -1,25 +1,78 @@
 #! /bin/sh
 
-# usage: sh package-updater.sh <path to fedora-scm>
+# usage: sh package-updater.sh <path to fedora-scm> <path to new source> <version>
 
-NAME="Package Updater"
+BRANCHES="f17 f16 f15" # branches on which should be built
+PACKAGER="Kalpa Welivitigoda <callkalpa@gmail.com>"
 
-if [ -e "$1" ]
-then
-	cd "$1"
-else
-	notify-send "$NAME" "invalid package"
-	exit $?
-fi
+PACKAGE_PATH="$1"
+SOURCE_PATH="$2"
+VERSION="$3"
 
-for branch in f17 f16 f15;
-do
-	fedpkg switch-branch "$branch"
-	git merge master
+# display error message and exit
+error_exit(){
+	echo "ERROR: $1"
+	exit 1
+}
+
+# iterates through branches and build
+go_through_branches(){
+	for branch in $BRANCHES;
+	do
+		fedpkg switch-branch "$branch"
+		git merge master
+		git push
+		fedpkg build &
+		sleep 5
+	done
+}
+
+# extract spec file name
+get_spec_file_name(){
+	SPEC_FILE="$(basename "$PACKAGE_PATH").spec"
+}
+
+# generate changelog
+generate_changelog(){
+	echo -n "Enter changelog message: "
+	read tmp
+	changelog_msg="* $(date "+%a %b %d %Y") $PACKAGER - $VERSION-1\n- $tmp\n"
+}
+
+# display last changelog message
+display_last_changelog(){
+	echo "Last changelog:"
+	grep -A3 %changelog $SPEC_FILE
+}
+
+# display the last commit, change spec file, commit and build for rawhide
+change_spec_and_build(){
+	
+	display_last_changelog
+
+	generate_changelog
+	tmp="$(mktemp)"
+	sed -e '/^%changelog/ a\'"$changelog_msg"'' -e '/^Version/c\'"Version:\t$VERSION"''  "$SPEC_FILE" > "$tmp"
+	mv "$tmp" "$SPEC_FILE"
+
 	git push
 	fedpkg build &
 	sleep 5
-done
+}
+
+
+# validate arguments
+if [ "$#" -eq "3" -a -e "$PACKAGE_PATH" -a -e "$SOURCE_PATH" ]
+then
+	cd "$PACKAGE_PATH"
+	fedpkg switch-branch master
+	fedpkg new-sources "$SOURCE_PATH"
+	get_spec_file_name
+	change_spec_and_build
+	go_through_branches
+else
+	error_exit "invalid arguments"
+fi
 
 fedpkg switch-branch master
 
