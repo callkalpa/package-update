@@ -1,13 +1,12 @@
 #! /bin/sh
 
-# usage: sh package-updater.sh <path to fedora-scm> <path to new source> <version>
+# usage: sh package-updater.sh <path to fedora-scm> <path to new source>
 
 BRANCHES="f17 f16 f15" # branches on which should be built
 PACKAGER="Kalpa Welivitigoda <callkalpa@gmail.com>"
 
 PACKAGE_PATH="$1"
 SOURCE_PATH="$2"
-VERSION="$3"
 
 # display error message and exit
 error_exit(){
@@ -34,9 +33,7 @@ get_spec_file_name(){
 
 # generate changelog
 generate_changelog(){
-	echo -n "Enter changelog message: "
-	read tmp
-	changelog_msg="* $(date "+%a %b %d %Y") $PACKAGER - $VERSION-1\n- $tmp\n"
+	changelog_msg="* $(date "+%a %b %d %Y") $PACKAGER - $VERSION-1\n- $iCHANGELOG_MSG\n"
 }
 
 # display last changelog message
@@ -55,19 +52,45 @@ change_spec_and_build(){
 	sed -e '/^%changelog/ a\'"$changelog_msg"'' -e '/^Version/c\'"Version:\t$VERSION"''  "$SPEC_FILE" > "$tmp"
 	mv "$tmp" "$SPEC_FILE"
 	
-	echo -n "Enter git commit message: "
-	read git_commit
 
-	git commit -am "$git_commit"
+	git commit -am "$GIT_COMMIT"
 	git push
 	fedpkg build &
 	sleep 5
 }
 
+get_inputs(){
+	echo -n "Enter Version-Release (ex: 21-1): "
+	read VERSION
+	if [ -z $VERSION ]
+	then
+		error_exit "Invalid version"
+	fi
+
+	echo -n "Enter changelog message: "
+	read CHANGELOG_MSG
+	if [ -z $CHANGELOG_MSG ]
+	then
+		error_exit "Invalid changelog message"
+	fi
+
+	echo -n "Enter git commit message: "
+	read GIT_COMMIT
+	if [ -z $GIT_COMMIT ]
+	then
+		error_exit "Invalid git commit message"
+	fi
+	
+}
+
+display_usage(){
+	echo "usage: package-update <fedora-package path> <package source path>"
+}
 
 # validate arguments
-if [ "$#" -eq "3" -a -e "$PACKAGE_PATH" -a -e "$SOURCE_PATH" ]
+if [ "$#" -eq "2" -a -e "$PACKAGE_PATH" -a -e "$SOURCE_PATH" ]
 then
+	get_inputs
 	cd "$PACKAGE_PATH"
 	fedpkg switch-branch master
 	fedpkg new-sources "$SOURCE_PATH"
@@ -75,7 +98,9 @@ then
 	change_spec_and_build
 	go_through_branches
 else
-	error_exit "invalid arguments"
+	echo "Invalid arguments"
+	display_usage
+	exit 1
 fi
 
 fedpkg switch-branch master
