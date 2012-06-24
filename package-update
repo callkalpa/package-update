@@ -1,0 +1,26 @@
+#! /bin/sh
+
+# usage: sh package-updater.sh <path to fedora-scm>
+
+NAME="Package Updater"
+
+if [ -e "$1" ]
+then
+	cd "$1"
+else
+	notify-send "$NAME" "invalid package"
+	exit $?
+fi
+
+for branch in f17 f16 f15;
+do
+	fedpkg switch-branch "$branch"
+	git merge master
+	git push
+	fedpkg build &
+	sleep 5
+done
+
+fedpkg switch-branch master
+
+exit 0
