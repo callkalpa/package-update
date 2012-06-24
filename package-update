@@ -54,7 +54,11 @@ change_spec_and_build(){
 	tmp="$(mktemp)"
 	sed -e '/^%changelog/ a\'"$changelog_msg"'' -e '/^Version/c\'"Version:\t$VERSION"''  "$SPEC_FILE" > "$tmp"
 	mv "$tmp" "$SPEC_FILE"
+	
+	echo -n "Enter git commit message: "
+	read git_commit
 
+	git commit -am "$git_commit"
 	git push
 	fedpkg build &
 	sleep 5
