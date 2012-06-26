@@ -33,13 +33,13 @@ get_spec_file_name(){
 
 # generate changelog
 generate_changelog(){
-	changelog_msg="* $(date "+%a %b %d %Y") $PACKAGER - $VERSION-1\n- $iCHANGELOG_MSG\n"
+	changelog_msg="* $(date "+%a %b %d %Y") $PACKAGER - $VERSION-1\n- $CHANGELOG_MSG\n"
 }
 
 # display last changelog message
 display_last_changelog(){
 	echo "Last changelog:"
-	grep -A3 %changelog $SPEC_FILE
+	grep -A3 %changelog "$SPEC_FILE"
 }
 
 # display the last commit, change spec file, commit and build for rawhide
@@ -66,14 +66,14 @@ get_inputs(){
 
 	echo -n "Enter changelog message: "
 	read CHANGELOG_MSG
-	if [ -z $CHANGELOG_MSG ]
+	if [ -z "$CHANGELOG_MSG" ]
 	then
 		error_exit "Invalid changelog message"
 	fi
 
 	echo -n "Enter git commit message: "
 	read GIT_COMMIT
-	if [ -z $GIT_COMMIT ]
+	if [ -z "$GIT_COMMIT" ]
 	then
 		error_exit "Invalid git commit message"
 	fi
@@ -84,6 +84,12 @@ display_usage(){
 	echo "usage: package-update <fedora-package path> <package source path>"
 }
 
+# move source file and new-sources
+new_source(){
+	mv "$SOURCE_PATH" .
+	fedpkg new-sources "$(basename $SOURCE_PATH)"
+}
+
 # validate arguments
 if [ "$#" -eq "2" -a -e "$PACKAGE_PATH" -a -e "$SOURCE_PATH" ]
 then
@@ -92,7 +98,7 @@ then
 	display_last_changelog
 	get_inputs
 	fedpkg switch-branch master
-	fedpkg new-sources "$SOURCE_PATH"
+	new_source
 	change_spec_and_build
 	go_through_branches
 else
