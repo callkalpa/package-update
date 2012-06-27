@@ -98,6 +98,7 @@ then
 	display_last_changelog
 	get_inputs
 	fedpkg switch-branch master
+	git pull
 	new_source
 	change_spec_and_build
 	go_through_branches
