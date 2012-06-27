@@ -36,13 +36,14 @@ generate_changelog(){
 	changelog_msg="* $(date "+%a %b %d %Y") $PACKAGER - $VERSION-1\n- $CHANGELOG_MSG\n"
 }
 
-# display last changelog message
-display_last_changelog(){
-	echo "Last changelog:"
-	grep -A3 %changelog "$SPEC_FILE"
+# display sections from current spec file
+display_current_spec(){
+	echo "Current spec file:"
+	grep -A1 "Version" "$SPEC_FILE"
+	grep -A3 "%changelog" "$SPEC_FILE"
 }
 
-# display the last commit, change spec file, commit and build for rawhide
+# change spec file, commit and build for rawhide
 change_spec_and_build(){
 
 	generate_changelog
@@ -95,7 +96,7 @@ if [ "$#" -eq "2" -a -e "$PACKAGE_PATH" -a -e "$SOURCE_PATH" ]
 then
 	cd "$PACKAGE_PATH"
 	get_spec_file_name
-	display_last_changelog
+	display_current_spec
 	get_inputs
 	fedpkg switch-branch master
 	git pull
