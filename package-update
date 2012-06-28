@@ -95,11 +95,11 @@ new_source(){
 if [ "$#" -eq "2" -a -e "$PACKAGE_PATH" -a -e "$SOURCE_PATH" ]
 then
 	cd "$PACKAGE_PATH"
+	git pull
 	get_spec_file_name
 	display_current_spec
 	get_inputs
 	fedpkg switch-branch master
-	git pull
 	new_source
 	change_spec_and_build
 	go_through_branches
