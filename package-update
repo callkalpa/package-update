@@ -87,7 +87,9 @@ display_usage(){
 
 # move source file and new-sources
 new_source(){
-	mv "$SOURCE_PATH" .
+	cd -
+	mv "$SOURCE_PATH" "$PACKAGE_PATH"
+	cd -
 	fedpkg new-sources "$(basename $SOURCE_PATH)"
 }
 
